@@ -295,34 +295,35 @@ html, body, [class*="css"], .stApp {
 [data-testid="stChatInputSubmitButton"] svg { fill: #fff !important; color: #fff !important; }
 
 /* Bento-inspired question cards: a quiet edge highlight appears on hover. */
-.stApp main [data-testid="stButton"] button {
+.stButton button {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; min-height: 66px; padding: 12px 16px; border-radius: 18px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
   box-shadow: 0 2px 10px rgba(0,0,0,.025);
   transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
 }
-.stApp main [data-testid="stButton"] button > div { flex: 1 1 auto; min-width: 0; }
-.stApp main [data-testid="stButton"] button p {
+.stButton button > div { flex: 1 1 auto; min-width: 0; }
+.stButton button p {
   margin: 0 !important; color: var(--text) !important; text-align: left; line-height: 1.4; font-weight: 550;
 }
-.stApp main [data-testid="stButton"] button::after {
+.stButton button::after {
   content: "↗"; flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center;
   border-radius: 50%; background: color-mix(in srgb, var(--accent) 9%, var(--surface));
   color: var(--accent); font-size: 13px; line-height: 1;
 }
-.stApp main [data-testid="stButton"] button:hover {
+.stButton button:hover {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: color-mix(in srgb, var(--accent) 2.5%, var(--surface));
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 9%, transparent);
   transform: translateY(-1px);
 }
-.stApp main [data-testid="stButton"] button:active { transform: scale(.985); }
-[data-testid="stSidebar"] [data-testid="stButton"] button {
+.stButton button:active { transform: scale(.985); }
+[data-testid="stSidebar"] .stButton button {
   min-height: 46px; border-radius: 980px; border: 1px solid var(--border);
-  background: var(--surface); color: var(--text);
+  padding: 9px 14px; background: var(--surface); color: var(--text);
 }
-[data-testid="stSidebar"] [data-testid="stButton"] button p { color: var(--text) !important; }
+[data-testid="stSidebar"] .stButton button p { color: var(--text) !important; text-align: center; }
+[data-testid="stSidebar"] .stButton button::after { content: none; }
 button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; }
 [data-testid="stSidebar"] { background: var(--surface); border-right: .5px solid var(--border); }
 [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
@@ -358,7 +359,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
   .welcome { margin: 20px auto 12px; padding: 24px 18px 20px; }
   .starter-heading { align-items: flex-start; font-size: 13px; }
   .starter-hint { font-size: 11px; text-align: right; }
-  .stApp main [data-testid="stButton"] button { min-height: 58px; padding: 10px 12px; border-radius: 16px; }
+  .stButton button { min-height: 58px; padding: 10px 12px; border-radius: 16px; }
   [data-testid="stChatMessageContent"] { max-width: min(82%, 760px) !important; }
   [data-testid="stBottom"] {
     background: var(--nav) !important; padding-bottom: env(safe-area-inset-bottom) !important;
