@@ -344,7 +344,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 [data-testid="stExpander"] details { border-color: var(--border); border-radius: 12px; }
 
 @media (max-width: 640px) {
-  .block-container { padding: calc(4rem + env(safe-area-inset-top)) .75rem calc(7rem + env(safe-area-inset-bottom)) !important; }
+  .block-container { padding: calc(6.5rem + env(safe-area-inset-top)) .75rem calc(7rem + env(safe-area-inset-bottom)) !important; }
   .app-topbar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     flex-direction: row; justify-content: flex-start; text-align: left; gap: 10px;
