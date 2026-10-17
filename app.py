@@ -461,6 +461,42 @@ def expand_search_terms(question):
     return expanded
 
 
+def is_director_identity_question(question):
+    """ตรวจคำถามที่ถามชื่อผู้อำนวยการปัจจุบัน โดยไม่เหมารวมคำถามติดต่อหรืออดีตผู้บริหาร"""
+    q = re.sub(r"\s+", "", str(question or "")).casefold()
+    if not ("ผู้อำนวยการ" in q or re.search(r"ผ\s*\.?\s*อ\.?", str(question or ""), re.IGNORECASE)):
+        return False
+    if "รองผู้อำนวยการ" in q or re.search(r"รองผ\s*\.?\s*อ\.?", str(question or ""), re.IGNORECASE):
+        return False
+    if any(term in q for term in ("โทร", "เบอร์", "ติดต่อ", "อีเมล", "email", "line", "facebook", "อดีต", "เมื่อก่อน", "256")):
+        return False
+    return True
+
+
+def find_current_director(pages):
+    """ดึงชื่อผู้บริหารจากบรรทัดข้อมูลที่หน้าแรกของเว็บวิทยาลัยประกาศไว้โดยตรง"""
+    for page in pages or []:
+        url = (page.get("url") or "").strip().lower().rstrip("/")
+        if url not in {"https://cicec.ac.th/web/index.php", "http://cicec.ac.th/web/index.php"}:
+            continue
+        content = page.get("content") or ""
+        match = re.search(
+            r"ผู้อำนวยการวิทยาลัยการอาชีพจอมทอง\s*(?:\||:|：)\s*([^|<>\r\n]{2,100})",
+            content,
+        )
+        if not match:
+            continue
+        candidate = re.sub(r"\s+", " ", match.group(1)).strip(" \t.:：")
+        # รับเฉพาะชื่อภาษาไทยที่มีคำนำหน้าหรือชื่อ-นามสกุล เพื่อตัดข้อความส่วนเกินออก
+        name = re.match(
+            r"((?:(?:นาย|นางสาว|นาง|ดร\.?|ว่าที่ร้อยตรี|ว่าที่)\s*)?[ก-๙]+(?:\s+[ก-๙]+){1,3})",
+            candidate,
+        )
+        if name:
+            return name.group(1).strip(), page
+    return None
+
+
 def build_page_text(pages, images_by_url=None):
     """images_by_url: ถ้าส่งมา จะบอกโมเดลว่าหน้าไหนมีรูป (ใช้ตอนที่ระบบจะแสดงรูปให้ผู้ใช้)"""
     parts = []
@@ -810,7 +846,17 @@ if question:
         if prev_user:
             search_query = f"{prev_user[-1]} {search_query}"
 
-    found = find_pages(search_query, chunks) if college_mode else []
+    director_record = (
+        find_current_director(pages)
+        if college_mode and is_director_identity_question(question)
+        else None
+    )
+    if director_record:
+        director_name, director_page = director_record
+        # ใช้หน้าแรกของวิทยาลัยซึ่งมีบรรทัดชื่อผู้บริหารโดยตรงเป็นแหล่งอ้างอิง
+        found = [{**director_page, "title": "เว็บไซต์วิทยาลัยการอาชีพจอมทอง · ข้อมูลผู้อำนวยการ"}]
+    else:
+        found = find_pages(search_query, chunks) if college_mode else []
     direct_faq = None if (not college_mode or contextual_college_followup) else find_exact_faq(search_query, faqs)
     selected_faqs = pick_faqs(search_query, faqs) if college_mode else []
     if direct_faq and direct_faq not in selected_faqs:
@@ -827,7 +873,7 @@ if question:
         if program_pages:
             found = program_pages
             program_answer = build_program_list_answer(program_pages)
-    if direct_faq:
+    if direct_faq and not director_record:
         # คำตอบนี้มีต้นฉบับอยู่ใน FAQ จึงไม่ต้องส่งคำถามที่ตรงกันให้โมเดลเรียบเรียงใหม่
         found = []
     with st.chat_message("assistant"):
@@ -839,7 +885,11 @@ if question:
             unsafe_allow_html=True,
         )
         try:
-            if general_mode:
+            if director_record:
+                answer = f"ผู้อำนวยการวิทยาลัยการอาชีพจอมทองคือ **{director_name}** ครับ"
+                faq_pool = []
+                used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
+            elif general_mode:
                 answer, used_model = ask_bot(
                     question, "", "", build_history_text(history), general_mode=True
                 )
@@ -905,3 +955,4 @@ if st.session_state.messages:
                 args=(prompt,),
                 use_container_width=True,
             )
+
