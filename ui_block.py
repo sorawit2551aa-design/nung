@@ -10,22 +10,29 @@ ACCENTS = {
     "ส้ม": "#C93400",
 }
 THEMES = ["อัตโนมัติ", "สว่าง", "มืด"]
-LAYOUTS = ["📱 แบบ iPhone", "🖥️ เต็มจอ"]
+LAYOUTS = ["📱 มือถือ", "🖥️ คอมพิวเตอร์"]
 
 
 def initialize_ui():
     st.session_state.setdefault("ui_theme", THEMES[0])
     st.session_state.setdefault("ui_accent", "ฟ้า")
-    st.session_state.setdefault("ui_layout", LAYOUTS[0])
+    # Keep existing preferences from older versions while giving new desktop
+    # sessions a layout that matches the computer they're using.
+    old_layouts = {"📱 แบบ iPhone": LAYOUTS[0], "🖥️ เต็มจอ": LAYOUTS[1]}
+    current_layout = st.session_state.get("ui_layout", LAYOUTS[1])
+    st.session_state["ui_layout"] = old_layouts.get(current_layout, current_layout)
+    if st.session_state["ui_layout"] not in LAYOUTS:
+        st.session_state["ui_layout"] = LAYOUTS[1]
 
 
 def add_appearance_controls():
     """Render appearance controls in the open sidebar."""
     st.markdown("#### 🎨 ปรับหน้าตา")
-    st.radio("รูปแบบหน้าจอ (บนคอม)", LAYOUTS, key="ui_layout")
+    st.radio("อุปกรณ์ที่ใช้", LAYOUTS, key="ui_layout", horizontal=True)
+    st.caption("บนคอม เลือก ‘มือถือ’ เพื่อดูตัวอย่างในกรอบโทรศัพท์ได้ ส่วนมือถือจริงจะจัดหน้าให้พอดีหน้าจออัตโนมัติ")
     st.radio("ธีม", THEMES, key="ui_theme", horizontal=True)
     st.selectbox("สีหลัก", list(ACCENTS), key="ui_accent")
-    st.caption("สีพื้นหลังจะปรับโทนให้เข้ากับสีหลักโดยอัตโนมัติ")
+    st.caption("สีพื้นหลังจะปรับให้เข้ากับสีหลักโดยอัตโนมัติ")
 
 
 def build_css(theme, accent, layout):
@@ -103,16 +110,21 @@ def build_css(theme, accent, layout):
         desktop_css = """
 @media (min-width: 900px) {
   .stApp { background: var(--desk); }
-  .block-container { max-width: 880px; padding: 1.4rem 2rem 8rem !important; }
-  .app-topbar { flex-direction: row; text-align: left; justify-content: flex-start; gap: 14px; }
-  .app-avatar { width: 48px; height: 48px; font-size: 24px; }
-  .app-title { margin-left: 2px; }
-  [data-testid="stBottomBlockContainer"] {
-    max-width: 880px; margin: 0 auto; padding: 8px 16px 14px !important;
-    background: transparent !important;
+  .block-container { max-width: 1040px; padding: 1.25rem 2rem 9rem !important; }
+  .app-topbar {
+    flex-direction: row; text-align: left; justify-content: flex-start; gap: 12px;
+    margin: 0 0 20px; padding: 12px 16px; border: 1px solid var(--border);
+    border-radius: 18px; background: var(--nav); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px); box-shadow: 0 4px 18px rgba(0,0,0,.035);
   }
-  [data-testid="stChatMessageContent"] { max-width: 70% !important; }
-  .welcome { padding: 56px 0 28px; }
+  .app-avatar { width: 46px; height: 46px; flex: 0 0 46px; font-size: 23px; }
+  .app-title { margin-left: 0; }
+  [data-testid="stBottomBlockContainer"] {
+    max-width: 1040px; margin: 0 auto; padding: 12px 24px 18px !important;
+    background: transparent !important; border: 0 !important;
+  }
+  [data-testid="stChatMessageContent"] { max-width: 72% !important; }
+  .welcome { padding: 44px 36px 38px; }
 }
 """
 
@@ -121,12 +133,12 @@ def build_css(theme, accent, layout):
 __THEME__
 :root { --accent: __ACCENT__; }
 html, body, [class*="css"], .stApp {
-  font-family: "Leelawadee UI", "Noto Sans Thai", Tahoma, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
 }
 .stApp { background: var(--bg); color: var(--text); }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stToolbar"], [data-testid="stDecoration"] { visibility: hidden; height: 0; }
-.block-container { max-width: 720px; padding: 1rem 1.25rem 8rem; }
+.block-container { max-width: 760px; padding: 1rem 1.25rem 9rem; }
 [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
 .stApp label { color: var(--text); }
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {
@@ -146,7 +158,7 @@ html, body, [class*="css"], .stApp {
 /* iMessage-inspired header */
 .app-topbar {
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
-  padding: 10px 0 14px; border-bottom: .5px solid var(--border); margin: 0 -4px 14px;
+  padding: 10px 0 14px; border-bottom: 1px solid var(--border); margin: 0 -4px 14px;
 }
 .app-avatar {
   display: flex; align-items: center; justify-content: center; width: 56px; height: 56px;
@@ -163,7 +175,7 @@ html, body, [class*="css"], .stApp {
 .welcome {
   max-width: 680px; margin: 30px auto 20px; padding: 30px 28px 26px; text-align: center;
   background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
-  box-shadow: 2px 4px 12px rgba(0,0,0,.08);
+  box-shadow: 0 8px 28px rgba(0,0,0,.045);
 }
 .welcome-icon {
   width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 18px; display: flex;
@@ -249,10 +261,10 @@ html, body, [class*="css"], .stApp {
 }
 
 /* Composer */
-[data-testid="stBottom"] { background: var(--bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+[data-testid="stBottom"] { background: var(--nav) !important; backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; border-top: 1px solid var(--border); }
 [data-testid="stBottom"]::before, [data-testid="stBottom"]::after { background: var(--bg) !important; }
-[data-testid="stBottom"] > div, [data-testid="stBottomBlockContainer"] { background: var(--bg) !important; }
-[data-testid="stChatInput"] { border: 1px solid var(--border) !important; border-radius: 980px !important; background: var(--surface) !important; box-shadow: none !important; }
+[data-testid="stBottom"] > div, [data-testid="stBottomBlockContainer"] { background: transparent !important; }
+[data-testid="stChatInput"] { border: 1px solid var(--border) !important; border-radius: 980px !important; background: var(--surface) !important; box-shadow: 0 2px 10px rgba(0,0,0,.035) !important; }
 [data-testid="stChatInput"] > div { background: transparent !important; border: none !important; }
 [data-testid="stChatInput"] [data-baseweb="textarea"],
 [data-testid="stChatInput"] [data-baseweb="base-input"] { background: transparent !important; border: 0 !important; box-shadow: none !important; }
@@ -298,8 +310,8 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     flex-direction: row; justify-content: flex-start; text-align: left; gap: 10px;
     margin: 0; padding: calc(8px + env(safe-area-inset-top)) 16px 10px;
-    background: var(--bg); border-bottom: 1px solid var(--border);
-    box-shadow: 0 5px 18px rgba(0,0,0,.06);
+    background: var(--nav); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0,0,0,.045);
   }
   .app-avatar { width: 42px; height: 42px; flex: 0 0 42px; font-size: 21px; }
   .app-name { font-size: 15px; }
@@ -307,7 +319,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
   .welcome { margin: 20px auto 12px; padding: 24px 18px 20px; }
   [data-testid="stChatMessageContent"] { max-width: min(82%, 760px) !important; }
   [data-testid="stBottom"] {
-    background: var(--bg) !important; padding-bottom: env(safe-area-inset-bottom) !important;
+    background: var(--nav) !important; padding-bottom: env(safe-area-inset-bottom) !important;
   }
   [data-testid="stBottomBlockContainer"] {
     padding: 8px 12px calc(10px + env(safe-area-inset-bottom)) !important;
@@ -321,3 +333,4 @@ __DESKTOP__
 </style>
 """
     return css.replace("__THEME__", theme_css).replace("__ACCENT__", accent).replace("__DESKTOP__", desktop_css)
+
