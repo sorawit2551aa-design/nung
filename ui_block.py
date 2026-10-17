@@ -298,13 +298,13 @@ html, body, [class*="css"], .stApp {
 .stButton button {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; min-height: 66px; padding: 12px 16px; border-radius: 18px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); text-align: left;
   box-shadow: 0 2px 10px rgba(0,0,0,.025);
   transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
 }
-.stButton button > div { flex: 1 1 auto; min-width: 0; }
+.stButton button > div { flex: 1 1 auto; min-width: 0; text-align: left; }
 .stButton button p {
-  margin: 0 !important; color: var(--text) !important; text-align: left; line-height: 1.4; font-weight: 550;
+  width: 100%; margin: 0 !important; color: var(--text) !important; text-align: left; line-height: 1.4; font-weight: 550;
 }
 .stButton button::after {
   content: "↗"; flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center;
