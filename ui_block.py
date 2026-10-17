@@ -168,6 +168,15 @@ html, body, [class*="css"], .stApp {
 .app-name span { color: var(--muted); font-weight: 400; }
 .app-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .app-sub b { color: #34C759; font-weight: 700; }
+.app-title { min-width: 0; }
+.app-provider {
+  display: inline-flex; align-items: center; gap: 5px; width: fit-content; margin-top: 6px;
+  padding: 3px 9px 3px 6px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: var(--muted); font-size: 11px; line-height: 1.35;
+  text-decoration: none !important; transition: border-color .16s ease, box-shadow .16s ease;
+}
+.app-provider img { display: block; width: 15px; height: 15px; object-fit: contain; }
+.app-provider:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 12%, transparent); }
 .chat-date { text-align: center; font-size: 12px; color: var(--muted); margin: 4px 0 10px; }
 .chat-date b { font-weight: 600; }
 
@@ -179,11 +188,19 @@ html, body, [class*="css"], .stApp {
 }
 .welcome-icon {
   width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 18px; display: flex;
-  align-items: center; justify-content: center; font-size: 32px; background: var(--bg);
-  border: 1px solid var(--border);
+  align-items: center; justify-content: center; font-size: 32px;
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 11%, transparent);
 }
 .welcome-title { font-size: clamp(25px, 4vw, 32px); line-height: 1.25; font-weight: 700; letter-spacing: -.5px; color: var(--text); margin: 0 0 8px; }
 .welcome-copy { margin: 0 auto; max-width: 340px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.starter-heading {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  max-width: 900px; margin: 4px auto 10px; padding: 0 2px;
+  color: var(--text); font-size: 14px; font-weight: 650; letter-spacing: -.1px;
+}
+.starter-hint { color: var(--muted); font-size: 12px; font-weight: 400; }
 
 /* Chat bubbles */
 [data-testid="stChatMessage"] {
@@ -277,14 +294,35 @@ html, body, [class*="css"], .stApp {
 [data-testid="stChatInputSubmitButton"] { background: var(--accent) !important; color: #fff !important; border-radius: 50% !important; }
 [data-testid="stChatInputSubmitButton"] svg { fill: #fff !important; color: #fff !important; }
 
-/* Suggested prompt buttons and sidebar */
-.stButton button {
-  min-height: 50px; border-radius: 980px; border: 1px solid var(--border); background: var(--surface);
-  color: var(--text); justify-content: flex-start; text-align: left; transition: transform .12s ease, border-color .12s ease;
+/* Bento-inspired question cards: a quiet edge highlight appears on hover. */
+.stApp main [data-testid="stButton"] button {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-height: 66px; padding: 12px 16px; border-radius: 18px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  box-shadow: 0 2px 10px rgba(0,0,0,.025);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
 }
-.stButton button p { color: var(--text) !important; }
-.stButton button:hover { border-color: var(--accent); color: var(--accent); }
-.stButton button:active { transform: scale(.98); }
+.stApp main [data-testid="stButton"] button > div { flex: 1 1 auto; min-width: 0; }
+.stApp main [data-testid="stButton"] button p {
+  margin: 0 !important; color: var(--text) !important; text-align: left; line-height: 1.4; font-weight: 550;
+}
+.stApp main [data-testid="stButton"] button::after {
+  content: "↗"; flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 50%; background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  color: var(--accent); font-size: 13px; line-height: 1;
+}
+.stApp main [data-testid="stButton"] button:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 2.5%, var(--surface));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 9%, transparent);
+  transform: translateY(-1px);
+}
+.stApp main [data-testid="stButton"] button:active { transform: scale(.985); }
+[data-testid="stSidebar"] [data-testid="stButton"] button {
+  min-height: 46px; border-radius: 980px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+}
+[data-testid="stSidebar"] [data-testid="stButton"] button p { color: var(--text) !important; }
 button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; }
 [data-testid="stSidebar"] { background: var(--surface); border-right: .5px solid var(--border); }
 [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
@@ -316,7 +354,11 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
   .app-avatar { width: 42px; height: 42px; flex: 0 0 42px; font-size: 21px; }
   .app-name { font-size: 15px; }
   .app-sub { font-size: 12px; }
+  .app-provider { margin-top: 4px; }
   .welcome { margin: 20px auto 12px; padding: 24px 18px 20px; }
+  .starter-heading { align-items: flex-start; font-size: 13px; }
+  .starter-hint { font-size: 11px; text-align: right; }
+  .stApp main [data-testid="stButton"] button { min-height: 58px; padding: 10px 12px; border-radius: 16px; }
   [data-testid="stChatMessageContent"] { max-width: min(82%, 760px) !important; }
   [data-testid="stBottom"] {
     background: var(--nav) !important; padding-bottom: env(safe-area-inset-bottom) !important;

@@ -707,6 +707,7 @@ STARTER_PROMPTS = [
     ("💰  ค่าเทอมและทุน", "ค่าเทอมและทุนการศึกษามีอะไรบ้าง"),
     ("📍  ติดต่อวิทยาลัย", "วิทยาลัยอยู่ที่ไหนและติดต่ออย่างไร"),
     ("😄  คุยเล่นกับน้องจอมทอง", "น้องจอมทองวันนี้เป็นไงบ้าง"),
+    ("🏫  ข้อมูลวิทยาลัย", "ขอข้อมูลทั่วไปเกี่ยวกับวิทยาลัยการอาชีพจอมทอง"),
 ]
 
 
@@ -752,6 +753,10 @@ st.markdown("""
   <div class="app-title">
     <div class="app-name">น้องจอมทอง <span>›</span></div>
     <div class="app-sub"><b>●</b> ออนไลน์ · ผู้ช่วยตอบคำถามวิทยาลัย</div>
+    <a class="app-provider" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" title="โลโก้ Gemini จาก SVGL">
+      <img src="https://svgl.app/library/gemini.svg" alt="Gemini" width="16" height="16">
+      <span>AI จาก Gemini</span>
+    </a>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -774,6 +779,11 @@ if not st.session_state.messages and not question:
       <p class="welcome-copy">ถามเรื่องวิทยาลัย ความรู้ทั่วไป หรือชวน “น้องจอมทอง” คุยเล่นก็ได้</p>
     </section>
     """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="starter-heading"><span>เริ่มถามได้จากหัวข้อเหล่านี้</span>'
+        '<span class="starter-hint">เลือกการ์ดเพื่อเริ่มแชต</span></div>',
+        unsafe_allow_html=True,
+    )
     prompt_cols = st.columns(2)
     for i, (label, prompt) in enumerate(STARTER_PROMPTS):
         with prompt_cols[i % 2]:
