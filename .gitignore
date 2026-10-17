@@ -1,0 +1,9 @@
+# ความลับ ห้าม push ขึ้น GitHub
+.env
+.streamlit/secrets.toml
+password*
+
+# ไฟล์ที่ไม่ต้องเก็บ
+.venv/
+__pycache__/
+*.zip
