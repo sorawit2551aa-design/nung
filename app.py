@@ -13,6 +13,7 @@ from google.genai import types
 from supabase import create_client
 import ui_block
 import program_guide
+import timetable_guide
 
 # Reload the local style module on each Streamlit rerun so CSS edits are applied
 # without leaving the browser on a stale copy of the interface.
@@ -400,7 +401,7 @@ COLLEGE_INTENT_TERMS = (
     "วิทยาลัย", "จอมทอง", "cicec", "ปวช", "ปวส", "หลักสูตร", "สาขาวิชา", "สาขา",
     "สมัครเรียน", "รับสมัคร", "รับเข้า", "สอบเข้า", "เอกสารสมัคร", "เกณฑ์การรับ", "เปิดสอน",
     "เรียนกี่ปี", "ค่าเทอม", "ค่าเรียน", "ค่าใช้จ่าย", "ทุนการศึกษา",
-    "ตารางเรียน", "ตารางสอน", "ผลการเรียน", "เงินบำรุง", "ทวิภาคี", "ผู้อำนวยการ",
+    "ตาราง", "ตารางเรียน", "ตารางสอน", "ผลการเรียน", "เงินบำรุง", "ทวิภาคี", "ผู้อำนวยการ",
     "ผอ", "เบอร์โทรวิทยาลัย", "ที่อยู่วิทยาลัย", "ฝึกงาน", "ฝึกอาชีพ",
 )
 
@@ -787,6 +788,11 @@ if not st.session_state.messages and not question:
 
 def show_message(m):
     st.write(m["content"])
+    if m.get("timetable"):
+        timetable = m["timetable"]
+        st.caption(f"📅 {timetable['title']} · {timetable['term']}")
+        st.components.v1.iframe(timetable["preview_url"], height=650, scrolling=True)
+        st.link_button("เปิด PDF ต้นฉบับ", timetable["source_file_url"])
     if m.get("images"):
         st.image(m["images"], width=IMAGE_WIDTH)
         total = m.get("images_total") or len(m["images"])
@@ -829,6 +835,8 @@ if question:
     playful_mode = is_playful_chat(question)
     college_mode = is_college_related_question(question, history)
     general_mode = not college_mode
+    timetable_query = college_mode and timetable_guide.is_timetable_question(question)
+    timetable_record = timetable_guide.find_timetable(question) if timetable_query else None
 
     # ผู้ใช้ขอดูรูปไหม (โหมด always = ส่งรูปทุกครั้งที่หน้าอ้างอิงมีรูป, off = ปิดการส่งรูป)
     wants_images = bool(IMAGE_REQUEST.search(question))
@@ -848,17 +856,19 @@ if question:
 
     director_record = (
         find_current_director(pages)
-        if college_mode and is_director_identity_question(question)
+        if not timetable_query and college_mode and is_director_identity_question(question)
         else None
     )
-    if director_record:
+    if timetable_query:
+        found = [{"url": timetable_guide.SOURCE_URL, "title": "หน้ารวมตารางเรียนและตารางสอนของวิทยาลัย"}]
+    elif director_record:
         director_name, director_page = director_record
         # ใช้หน้าแรกของวิทยาลัยซึ่งมีบรรทัดชื่อผู้บริหารโดยตรงเป็นแหล่งอ้างอิง
         found = [{**director_page, "title": "เว็บไซต์วิทยาลัยการอาชีพจอมทอง · ข้อมูลผู้อำนวยการ"}]
     else:
         found = find_pages(search_query, chunks) if college_mode else []
-    direct_faq = None if (not college_mode or contextual_college_followup) else find_exact_faq(search_query, faqs)
-    selected_faqs = pick_faqs(search_query, faqs) if college_mode else []
+    direct_faq = None if (not college_mode or contextual_college_followup or timetable_query) else find_exact_faq(search_query, faqs)
+    selected_faqs = pick_faqs(search_query, faqs) if college_mode and not timetable_query else []
     if direct_faq and direct_faq not in selected_faqs:
         selected_faqs.insert(0, direct_faq)
     faq_text, faq_images = build_faq_text(selected_faqs)
@@ -885,35 +895,62 @@ if question:
             unsafe_allow_html=True,
         )
         try:
-            if director_record:
+            if timetable_query and timetable_record:
+                answer = (
+                    f"พบตารางเรียน **{timetable_record['title']}** ส่งให้แล้วครับ\n\n"
+                    f"หมายเหตุ: ไฟล์บนเว็บไซต์ระบุ **{timetable_record['term']}** อาจไม่ใช่ตารางภาคเรียนปัจจุบัน"
+                )
+                timetable_payload = {
+                    **timetable_record,
+                    "preview_url": timetable_guide.preview_url(timetable_record),
+                    "source_file_url": timetable_guide.source_file_url(timetable_record),
+                }
+                faq_pool = []
+                used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
+            elif timetable_query:
+                answer = (
+                    "ตอนนี้ยังไม่พบไฟล์ตารางเรียนของชั้นหรือห้องที่ถามในรายการที่เชื่อมไว้ครับ "
+                    "ลองระบุสาขา ชั้น และห้องให้ชัดขึ้น หรือเปิดหน้ารวมตารางเรียนของวิทยาลัยได้จากแหล่งอ้างอิงด้านล่างครับ"
+                )
+                timetable_payload = None
+                faq_pool = []
+                used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
+            elif director_record:
                 answer = f"ผู้อำนวยการวิทยาลัยการอาชีพจอมทองคือ **{director_name}** ครับ"
+                timetable_payload = None
                 faq_pool = []
                 used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
             elif general_mode:
                 answer, used_model = ask_bot(
                     question, "", "", build_history_text(history), general_mode=True
                 )
+                timetable_payload = None
                 faq_pool = []
             elif program_advice:
                 answer = program_guide.build_advice_answer(question)
+                timetable_payload = None
                 found = program_guide.advice_sources(question)
                 faq_pool = []
                 used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
             elif direct_faq:
                 answer = (direct_faq.get("answer") or "").strip() or NO_ANSWER
+                timetable_payload = None
                 faq_pool = normalize_images(direct_faq.get("images")) if show_images else []
                 used_model = "ข้อมูลคำถาม-คำตอบของวิทยาลัย"
             elif program_answer:
                 answer = program_answer
+                timetable_payload = None
                 faq_pool = []
                 used_model = "ข้อมูลเว็บไซต์วิทยาลัย"
             else:
                 answer, used_model = ask_bot(question, faq_text, page_text, build_history_text(history), show_images)
+                timetable_payload = None
                 answer, faq_pool = extract_faq_images(answer, faq_images)
         except Exception as error:
             detail = f"{type(error).__name__}: {str(error)[:150]}"
             print("CHAT ERROR:", detail)
             answer, used_model = error_message(detail), ""
+            timetable_payload = None
             faq_pool = []
         finally:
             typing.empty()
@@ -932,6 +969,7 @@ if question:
             "role": "assistant", "content": answer, "model": used_model, "sources": sources,
             "images": images, "images_total": images_total,
             "mode": ("playful" if playful_mode else "general") if general_mode else "college",
+            "timetable": timetable_payload,
         }
         show_message(message)
     st.session_state.messages.append(message)
