@@ -4,6 +4,8 @@ import re
 
 
 SOURCE_URL = "https://sites.google.com/view/cicecdata/บริการข้อมูลสารสนเทศ/ตารางเรียน-ตารางสอน"
+CURRENT_TERM_CODE = "2/2569"
+CURRENT_TERM_LABEL = "ภาคเรียนที่ 2/2569"
 
 # The published drive folder currently exposes semester 1/2568 files. Keep the
 # term visible in the UI so an old timetable is never presented as current.
@@ -11,6 +13,7 @@ TIMETABLES = (
     {
         "title": "ช่างไฟฟ้า ปวช. 1/1",
         "term": "ภาคเรียนที่ 1/2568",
+        "term_code": "1/2568",
         "file_name": "ชฟ1-1.pdf",
         "drive_id": "1oZ1PziHOKXm_ExdGPUBoK3tSqvcDs1y1",
         "aliases": (
@@ -40,10 +43,15 @@ def is_timetable_question(question):
 
 
 def find_timetable(question):
-    """Return only an exact class match; do not guess when the class is vague."""
+    """Return an exact class match for the requested term (current term by default)."""
     q = normalize(question)
+    raw_question = str(question or "").translate(str.maketrans("๐๑๒๓๔๕๖๗๘๙", "0123456789"))
+    term_match = re.search(r"([12])\s*[/\-]\s*(25\d{2})", raw_question)
+    requested_term = f"{term_match.group(1)}/{term_match.group(2)}" if term_match else CURRENT_TERM_CODE
     matches = []
     for item in TIMETABLES:
+        if item.get("term_code") != requested_term:
+            continue
         for alias in item["aliases"]:
             key = normalize(alias)
             if key and key in q:
