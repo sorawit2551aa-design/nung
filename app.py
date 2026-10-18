@@ -810,6 +810,13 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Read the pinned chat input before rendering controls so the download menu can
+# be refreshed with the completed transcript after a new answer is appended.
+typed_question = st.chat_input("พิมพ์ข้อความ...")
+question = typed_question
+if question is None:
+    question = st.session_state.pop("suggested_question", None)
+
 # Create a popover for appearance controls and download button
 # We'll position the button using columns to align it right
 col1, col2, col3 = st.columns([10, 0.1, 0.9])
@@ -832,9 +839,9 @@ with col3:
 
         st.divider()
 
-        # Download transcript button
-        if st.session_state.messages:
-            st.download_button(
+        download_slot = st.empty()
+        if st.session_state.messages and not question:
+            download_slot.download_button(
                 "⬇️ ดาวน์โหลดบทสนทนา",
                 data=build_transcript(st.session_state.messages),
                 file_name="บทสนทนาน้องจอมทอง.txt",
@@ -862,13 +869,6 @@ st.sidebar.caption("ข้อมูลอ้างอิงจากเว็บ
 
 if not pages:
     st.info("ยังไม่มีข้อมูลหน้าเว็บ บอทจะตอบได้เฉพาะจากคำถาม-คำตอบเท่านั้น")
-
-# Read the pinned chat input before drawing the empty state so a submitted
-# message can replace the welcome screen in this same Streamlit run.
-typed_question = st.chat_input("พิมพ์ข้อความ...")
-question = typed_question
-if question is None:
-    question = st.session_state.pop("suggested_question", None)
 
 if not st.session_state.messages and not question:
     st.markdown("""
@@ -1121,6 +1121,14 @@ if question:
         }
         show_message(message)
         st.session_state.messages.append(message)
+    download_slot.download_button(
+        "⬇️ ดาวน์โหลดบทสนทนา",
+        data=build_transcript(st.session_state.messages),
+        file_name="บทสนทนาน้องจอมทอง.txt",
+        mime="text/plain; charset=utf-8",
+        use_container_width=True,
+        key="download_chat_transcript_popover",
+    )
 
 if st.session_state.messages:
     with st.popover("✨ คำถามยอดนิยม"):
