@@ -1101,35 +1101,28 @@ if question:
         answered = bool(used_model) and NO_ANSWER not in answer
         if IMAGE_MODE == "off" or not show_images or not answered:
             faq_pool = []
-            # Get sources that were actually used for this answer (passed to model as context)
-    raw_sources = found if answered else []
-    # Filter out old/irrelevant announcements unless user asked about them, deduplicate, limit to 3
-    sources = filter_sources(raw_sources, question) if answered else []
-    page_pool, page_total = pick_images(answer, found, image_map) if (answered and show_images) else ([], 0)
-    pool = list(faq_pool)
-    for image in page_pool:
-        if image not in pool:
-            pool.append(image)
-    images_total = len(set(faq_pool).union(page_pool))
-    images = pool[:MAX_IMAGES]
-    message = {
-        "role": "assistant", "content": answer, "model": used_model, "sources": sources,
-        "images": images, "images_total": images_total,
-        "mode": ("playful" if playful_mode else "general") if general_mode else "college",
-        "timetable": timetable_payload,
-    }
-    show_message(message)
-    st.session_state.messages.append(message)
+        # Keep the answer in the same chat container as the typing indicator so
+        # the bubble wraps both short and long replies consistently.
+        raw_sources = found if answered else []
+        # Filter old announcements, deduplicate, and keep only the three most relevant sources.
+        sources = filter_sources(raw_sources, question) if answered else []
+        page_pool, page_total = pick_images(answer, found, image_map) if (answered and show_images) else ([], 0)
+        pool = list(faq_pool)
+        for image in page_pool:
+            if image not in pool:
+                pool.append(image)
+        images_total = len(set(faq_pool).union(page_pool))
+        images = pool[:MAX_IMAGES]
+        message = {
+            "role": "assistant", "content": answer, "model": used_model, "sources": sources,
+            "images": images, "images_total": images_total,
+            "mode": ("playful" if playful_mode else "general") if general_mode else "college",
+            "timetable": timetable_payload,
+        }
+        show_message(message)
+        st.session_state.messages.append(message)
 
 if st.session_state.messages:
-    st.download_button(
-        "⬇️ ดาวน์โหลดบทสนทนา",
-        data=build_transcript(st.session_state.messages),
-        file_name="บทสนทนาน้องจอมทอง.txt",
-        mime="text/plain; charset=utf-8",
-        use_container_width=True,
-        key="download_chat_transcript",
-    )
     with st.popover("✨ คำถามยอดนิยม"):
         st.caption("เลือกหัวข้อเพื่อถามน้องจอมทองต่อได้ทันที")
         for i, (label, prompt) in enumerate(STARTER_PROMPTS):
