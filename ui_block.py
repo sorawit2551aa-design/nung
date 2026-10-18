@@ -7,7 +7,7 @@ ACCENTS = {
     "เขียว": "#248A3D",
     "ม่วง": "#8944AB",
     "ชมพู": "#D30F45",
-    "ส้ม": "#C93400",
+    "ส้ม": "#F05A00",
 }
 THEMES = ["อัตโนมัติ", "สว่าง", "มืด"]
 LAYOUTS = ["📱 มือถือ", "🖥️ คอมพิวเตอร์"]
@@ -15,7 +15,7 @@ LAYOUTS = ["📱 มือถือ", "🖥️ คอมพิวเตอร์
 
 def initialize_ui():
     st.session_state.setdefault("ui_theme", THEMES[0])
-    st.session_state.setdefault("ui_accent", "ฟ้า")
+    st.session_state.setdefault("ui_accent", "ส้ม")
     # Keep existing preferences from older versions while giving new desktop
     # sessions a layout that matches the computer they're using.
     old_layouts = {"📱 แบบ iPhone": LAYOUTS[0], "🖥️ เต็มจอ": LAYOUTS[1]}
@@ -36,6 +36,13 @@ def add_appearance_controls():
 
 
 def build_css(theme, accent, layout):
+    if accent.startswith("#"):
+        hex_color = accent
+        # Find the key that maps to this hex color
+        accent_key = next((k for k, v in ACCENTS.items() if v == hex_color), "ฟ้า")
+    else:
+        accent_key = accent if accent in ACCENTS else "ฟ้า"
+        hex_color = ACCENTS[accent_key]
     light_backgrounds = {
         ACCENTS["ฟ้า"]: "#F2F7FD",
         ACCENTS["เขียว"]: "#F3F8F3",
@@ -50,8 +57,8 @@ def build_css(theme, accent, layout):
         ACCENTS["ชมพู"]: "#190E13",
         ACCENTS["ส้ม"]: "#19120D",
     }
-    page_background = light_backgrounds.get(accent, light_backgrounds[ACCENTS["ฟ้า"]])
-    desk_background = dark_desks.get(accent, dark_desks[ACCENTS["ฟ้า"]])
+    page_background = light_backgrounds.get(hex_color, light_backgrounds[ACCENTS["ฟ้า"]])
+    desk_background = dark_desks.get(hex_color, dark_desks[ACCENTS["ฟ้า"]])
     light = (
         f"--bg:{page_background}; --surface:#FFFFFF; --bubble-in:#E8E8ED; "
         "--text:#1D1D1F; --muted:#6E6E73; --border:rgba(0,0,0,.12); "
@@ -104,6 +111,9 @@ def build_css(theme, accent, layout):
   }
   .ios-island { display: block; position: sticky; top: 0; z-index: 51; }
   [data-testid="stChatMessageContent"] { max-width: 80% !important; }
+  .welcome-title {
+    font-size: clamp(24px, 4vw, 36px);
+  }
 }
 """
     else:
@@ -182,8 +192,16 @@ html, body, [class*="css"], .stApp {
 
 /* Welcome screen */
 .welcome {
-  max-width: 680px; margin: 30px auto 20px; padding: 30px 28px 26px; text-align: center;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 900px;
+  margin: 30px auto 20px;
+  padding: 30px 28px 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
   box-shadow: 0 8px 28px rgba(0,0,0,.045);
 }
 .welcome-icon {
@@ -193,11 +211,29 @@ html, body, [class*="css"], .stApp {
   border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 11%, transparent);
 }
-.welcome-title { font-size: clamp(25px, 4vw, 32px); line-height: 1.25; font-weight: 700; letter-spacing: -.5px; color: var(--text); margin: 0 0 8px; }
-.welcome-copy { margin: 0 auto; max-width: 340px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.welcome-title {
+  font-size: clamp(20px, 6vw, 30px);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text);
+  width: 100%;
+  text-align: center;
+  margin: 0 0 8px;
+}
+.welcome-copy {
+  margin: 0 auto;
+  max-width: 36ch;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
 .starter-heading {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  max-width: 900px; margin: 4px auto 10px; padding: 0 2px;
+  max-width: 900px; margin: 4px auto 10px; padding: 0 28px;
   color: var(--text); font-size: 14px; font-weight: 650; letter-spacing: -.1px;
 }
 .starter-hint { color: var(--muted); font-size: 12px; font-weight: 400; }
@@ -297,7 +333,7 @@ html, body, [class*="css"], .stApp {
 /* Bento-inspired question cards: a quiet edge highlight appears on hover. */
 .stButton button {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  width: 100%; min-height: 66px; padding: 12px 16px; border-radius: 18px;
+  width: 100%; min-height: 66px; min-width: 44px; padding: 12px 16px; border-radius: 18px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text); text-align: left;
   box-shadow: 0 2px 10px rgba(0,0,0,.025);
   transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
@@ -319,13 +355,13 @@ html, body, [class*="css"], .stApp {
 }
 .stButton button:active { transform: scale(.985); }
 [data-testid="stSidebar"] .stButton button {
-  min-height: 46px; border-radius: 980px; border: 1px solid var(--border);
+  min-height: 46px; min-width: 44px; border-radius: 980px; border: 1px solid var(--border);
   padding: 9px 14px; background: var(--surface); color: var(--text);
 }
 [data-testid="stSidebar"] .stButton button p { color: var(--text) !important; text-align: center; }
 [data-testid="stSidebar"] .stButton button::after { content: none; }
 button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; }
-[data-testid="stSidebar"] { background: var(--surface); border-right: .5px solid var(--border); }
+[data-testid="stSidebar"] { display: block; visibility: visible; width: initial; background: var(--surface); border-right: .5px solid var(--border); }
 [data-testid="stSidebar"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
   background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important;
 }
@@ -341,6 +377,34 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] summary { color: var(--text) !important; }
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: var(--muted) !important; }
+/* Global radio and checkbox accent color */
+input[type="radio"], input[type="checkbox"] {
+  accent-color: var(--accent) !important;
+}
+
+/* Global radio checked state */
+label[data-baseweb="radio"] > div:first-child {
+  border-color: var(--accent) !important;
+}
+label[data-baseweb="radio"]:has(input:checked) > div:first-child {
+  background: transparent !important;
+  border-color: var(--accent) !important;
+}
+label[data-baseweb="radio"]:has(input:checked) > div:first-child > div {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Global checkbox checked state */
+label[data-baseweb="checkbox"] > div:first-child {
+  border-color: var(--accent) !important;
+}
+label[data-baseweb="checkbox"]:has(input:checked) > div:first-child {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+/* Popover highlights: selector not found; please verify */
 [data-testid="stExpander"] details { border-color: var(--border); border-radius: 12px; }
 
 @media (max-width: 640px) {
@@ -372,8 +436,81 @@ button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px sol
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+	/* Source cards */
+	.source-card {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 8px;
+	  padding: 8px 12px;
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: 12px;
+	  text-decoration: none;
+	  font-size: 14px;
+	  color: var(--text);
+	  margin: 4px 0;
+	}
+	.source-card:hover {
+	  background: var(--bubble-in);
+	  border-color: var(--accent);
+	}
+	.source-card-icon {
+	  flex: 0 0 20px;
+	  font-size: 18px;
+	  line-height: 1;
+	}
+	.source-card-title {
+	  font-weight: 500;
+	  line-height: 1.4;
+	  max-height: 2.8em; /* 2 lines */
+	  overflow: hidden;
+	  text-overflow: ellipsis;
+	  display: -webkit-box;
+	  -webkit-line-clamp: 2;
+	  -webkit-box-orient: vertical;
+	}
+	.source-card-site {
+	  font-size: 12px;
+	  color: var(--muted);
+	  margin-top: 2px;
+	}
+	/* Source list */
+	.src-list {
+	  display: flex;
+	  flex-direction: column;
+	  gap: 6px;
+	}
+	.src-row {
+	  text-decoration: none;
+	  color: var(--text);
+	  display: flex;
+	  flex-direction: column;
+	  align-items: start;
+	  gap: 2px;
+	  padding: 0;
+	  margin: 0;
+	  border: none;
+	  background: transparent;
+	  border-radius: 0;
+	  font-size: 14px;
+	}
+	.src-row .src-title {
+	  font-weight: 500;
+	  line-height: 1.4;
+	}
+	.src-row .src-domain {
+	  font-size: 12px;
+	  color: var(--muted);
+	}
+	.src-row:hover {
+	  text-decoration: underline;
+	}
+	[data-testid="stChatMessageContent"] a.src-row {
+	  color: var(--text);
+	}
+
 __DESKTOP__
 </style>
 """
-    return css.replace("__THEME__", theme_css).replace("__ACCENT__", accent).replace("__DESKTOP__", desktop_css)
+    return css.replace("__THEME__", theme_css).replace("__ACCENT__", hex_color).replace("__DESKTOP__", desktop_css)
 
